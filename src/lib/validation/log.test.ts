@@ -100,7 +100,7 @@ describe("logInputSchema", () => {
     expect(parse({ note: "   " }).data?.note).toBeNull();
   });
 
-  test("la carita es opcional y va de 1 a 5", () => {
+  test("el estado de ánimo es opcional y va de 1 a 5", () => {
     expect(parse({ mood: "4" }).data?.mood).toBe(4);
     expect(parse({ mood: undefined }).data?.mood).toBeUndefined();
     expect(errorsOf({ mood: "6" })).toContain("mood");

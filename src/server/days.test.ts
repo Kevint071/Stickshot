@@ -55,7 +55,7 @@ describe("listDays", () => {
 });
 
 describe("getDay", () => {
-  test("devuelve carita, nota y registros en orden de anotación", async () => {
+  test("devuelve estado de ánimo, nota y registros en orden de anotación", async () => {
     const first = await practice(ana, "2026-10-03", { mood: 5 });
     const second = await practice(ana, "2026-10-03", { bpm: 130 });
     const day = await getDay(t.db, ana, "2026-10-03");
@@ -70,7 +70,7 @@ describe("getDay", () => {
 });
 
 describe("updateDay", () => {
-  test("cambia la carita y la nota", async () => {
+  test("cambia el estado de ánimo y la nota", async () => {
     await practice(ana, "2026-10-03", { mood: 3 });
     expect(
       await updateDay(t.db, ana, "2026-10-03", { mood: 4, note: "Cansado" }),

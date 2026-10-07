@@ -32,7 +32,7 @@ describe("practice_days", () => {
       .values({ userId: bea, date: "2026-10-07", mood: 3 });
   });
 
-  test("la carita va de 1 a 5", async () => {
+  test("el estado de ánimo va de 1 a 5", async () => {
     await expect(
       t.db
         .insert(practiceDays)

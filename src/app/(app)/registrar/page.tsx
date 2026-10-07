@@ -24,7 +24,7 @@ export default async function RegisterPage({
 
   const db = getDb();
   // El servidor no conoce el "hoy" del dispositivo: se envían las fechas con día
-  // alrededor de hoy en UTC para que el formulario sepa si debe pedir la carita.
+  // alrededor de hoy en UTC para que el formulario sepa si debe pedir el estado de ánimo.
   const [exercises, recentDates, chosenDates] = await Promise.all([
     listExercisesForPicker(db, userId),
     dayDatesBetween(db, userId, shiftDays(now, -2), shiftDays(now, 1)),

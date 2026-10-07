@@ -5,7 +5,7 @@ import { updateDayAction } from "@/lib/actions/days";
 import { MoodPicker } from "./mood-picker";
 import { inputClass } from "./ui";
 
-/** Carita y nota del día; se guardan al cambiar la carita o al salir de la nota. */
+/** Estado de ánimo y nota del día; se guardan al cambiar el estado de ánimo o al salir de la nota. */
 export function DayEditor({
   date,
   mood: initialMood,
@@ -38,7 +38,7 @@ export function DayEditor({
   return (
     <div className="space-y-4">
       <MoodPicker
-        label="Cómo te sentiste"
+        label="Estado de ánimo"
         value={mood}
         onChange={(value) => {
           setMood(value);

@@ -42,13 +42,13 @@ const daysOf = (userId: string) =>
   t.db.select().from(practiceDays).where(eq(practiceDays.userId, userId));
 
 describe("saveLog", () => {
-  test("el primer registro de una fecha sin carita pide la carita y no guarda", async () => {
+  test("el primer registro de una fecha sin estado de ánimo pide el estado de ánimo y no guarda", async () => {
     const result = await saveLog(t.db, ana, input());
     expect(result).toEqual({ status: "needsMood" });
     expect(await daysOf(ana)).toHaveLength(0);
   });
 
-  test("con carita crea el día y el registro", async () => {
+  test("con estado de ánimo crea el día y el registro", async () => {
     const result = await saveLog(t.db, ana, input({ mood: 4 }));
     expect(result.status).toBe("saved");
     const days = await daysOf(ana);
@@ -56,7 +56,7 @@ describe("saveLog", () => {
     expect(days[0]).toMatchObject({ date: "2026-10-07", mood: 4 });
   });
 
-  test("el segundo registro reutiliza el día y no necesita carita", async () => {
+  test("el segundo registro reutiliza el día y no necesita estado de ánimo", async () => {
     await saveLog(t.db, ana, input({ mood: 4 }));
     const result = await saveLog(t.db, ana, input({ bpm: 150 }));
     expect(result.status).toBe("saved");
@@ -66,7 +66,7 @@ describe("saveLog", () => {
     expect(new Set(logs.map((l) => l.dayId)).size).toBe(1);
   });
 
-  test("una carita enviada en un día existente no cambia la del día", async () => {
+  test("un estado de ánimo enviado en un día existente no cambia el del día", async () => {
     await saveLog(t.db, ana, input({ mood: 4 }));
     await saveLog(t.db, ana, input({ mood: 1 }));
     expect((await daysOf(ana))[0].mood).toBe(4);
@@ -104,7 +104,7 @@ describe("updateLog y deleteLog", () => {
     expect((await getLog(t.db, ana, id))?.bpm).toBe(150);
   });
 
-  test("mover un registro a una fecha sin día pide carita", async () => {
+  test("mover un registro a una fecha sin día pide estado de ánimo", async () => {
     const id = await saved();
     expect(
       await updateLog(t.db, ana, id, input({ date: "2026-10-01" })),
@@ -119,7 +119,7 @@ describe("updateLog y deleteLog", () => {
     expect((await getLog(t.db, ana, id))?.date).toBe("2026-10-01");
   });
 
-  test("borrar el último registro conserva el día con su carita y nota", async () => {
+  test("borrar el último registro conserva el día con su estado de ánimo y nota", async () => {
     const id = await saved();
     await t.db
       .update(practiceDays)

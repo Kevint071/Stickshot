@@ -14,7 +14,7 @@ export type SaveLogResult =
 
 /**
  * Devuelve el día del usuario en esa fecha, creándolo si hace falta. Sin día y
- * sin carita devuelve null: el día solo nace con su primer registro y su carita.
+ * sin estado de ánimo devuelve null: el día solo nace con su primer registro y su estado de ánimo.
  */
 async function resolveDay(
   db: Db,

@@ -40,11 +40,11 @@ Algunas cosas a tener en cuenta:
 - **Después de guardar, el formulario conserva los valores**, así que para el siguiente intento solo tienes que cambiar lo que varió (por ejemplo, el BPM).
 - **Puedes anotar en días pasados** cambiando la fecha, o desde el historial con **+ Añadir registro**. No se admiten fechas futuras.
 
-## Tu día y tu carita
+## Tu día y tu estado de ánimo
 
 No hay sesiones: todo lo que anotas en una misma fecha se agrupa en ese día, aunque hayas practicado en varios ratos.
 
-Con el primer registro de cada día eliges una carita para contar cómo te sentiste ese día (muy mal, mal, normal, bien o muy bien). La carita es sobre el día, no sobre cómo salió la práctica. También puedes escribir una nota del día cuando quieras desde el historial.
+Con el primer registro de cada día indicas tu estado de ánimo en una escala de cinco niveles (muy mal, mal, normal, bien o muy bien). Describe cómo estabas ese día, no cómo salió la práctica. También puedes escribir una nota del día cuando quieras desde el historial.
 
 ## Cómo se calculan los récords
 
@@ -73,13 +73,13 @@ En **Ejercicios** tienes todo lo que has practicado. Al entrar en uno ves la evo
 
 ## Historial
 
-En **Historial** están tus días del más reciente al más antiguo. Al entrar en uno ves su carita, su nota y sus registros, y puedes:
+En **Historial** están tus días del más reciente al más antiguo. Al entrar en uno ves su estado de ánimo, su nota y sus registros, y puedes:
 
-- Cambiar la carita o la nota del día.
+- Cambiar el estado de ánimo o la nota del día.
 - Tocar un registro para corregirlo o borrarlo.
 - Añadir registros a ese día.
 
-Si borras todos los registros de un día, el día se conserva con su carita y su nota.
+Si borras todos los registros de un día, el día se conserva con su estado de ánimo y su nota.
 
 ## Ajustes
 

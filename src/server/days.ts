@@ -65,7 +65,7 @@ export async function getDay(db: Db, userId: string, date: string) {
   return { ...day, logs };
 }
 
-/** Cambia la carita y la nota de un día existente del usuario. */
+/** Cambia el estado de ánimo y la nota de un día existente del usuario. */
 export async function updateDay(
   db: Db,
   userId: string,

@@ -5,7 +5,7 @@ import { MOODS } from "@/lib/labels";
 export function MoodPicker({
   value,
   onChange,
-  label = "¿Cómo te sentiste hoy?",
+  label = "Estado de ánimo",
   error,
 }: {
   value: number | undefined;

@@ -62,7 +62,7 @@ export function LogForm({
   logId,
 }: {
   exercises: PickerExercise[];
-  /** Fechas en las que el usuario ya tiene día (no hace falta pedir carita). */
+  /** Fechas en las que el usuario ya tiene día (no hace falta pedir el estado de ánimo). */
   existingDates: string[];
   initial?: LogFormInitial;
   /** Si se indica, el formulario corrige ese registro en vez de crear uno. */
@@ -128,7 +128,7 @@ export function LogForm({
       mood: needsMood ? mood : undefined,
     };
     if (needsMood && mood === undefined) {
-      setErrors({ mood: ["Elige cómo te sentiste este día"] });
+      setErrors({ mood: ["Indica tu estado de ánimo del día"] });
       setAskMood(true);
       return;
     }
@@ -141,7 +141,7 @@ export function LogForm({
           setErrors(result.errors);
           return;
         case "needsMood":
-          setErrors({ mood: ["Elige cómo te sentiste este día"] });
+          setErrors({ mood: ["Indica tu estado de ánimo del día"] });
           setAskMood(true);
           return;
         case "notFound":
@@ -337,8 +337,8 @@ export function LogForm({
           }}
           label={
             date && date !== today
-              ? `¿Cómo te sentiste el ${formatDay(date)}?`
-              : "¿Cómo te sentiste hoy?"
+              ? `Estado de ánimo del ${formatDay(date)}`
+              : "Estado de ánimo de hoy"
           }
           error={error("mood")}
         />

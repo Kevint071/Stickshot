@@ -41,7 +41,7 @@ export function dateSchema(now: Date) {
     });
 }
 
-export const moodSchema = intField(1, 5, "Elige cómo te sentiste hoy");
+export const moodSchema = intField(1, 5, "Indica tu estado de ánimo del día");
 
 /** Valida el formulario de registro. `now` se inyecta para poder testear el límite de fecha. */
 export function logInputSchema(now: Date = new Date()) {
