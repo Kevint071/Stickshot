@@ -337,8 +337,8 @@ export function LogForm({
           }}
           label={
             date && date !== today
-              ? `Estado de ánimo del ${formatDay(date)}`
-              : "Estado de ánimo de hoy"
+              ? `¿Cómo te sentiste el ${formatDay(date)}?`
+              : "¿Cómo te sentiste hoy?"
           }
           error={error("mood")}
         />
