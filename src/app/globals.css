@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
+/*
+ * Tema: "system" (por defecto) sigue al sistema operativo; "light" y "dark"
+ * lo fuerzan con data-theme en <html>, que el servidor pinta desde la cookie
+ * para que no haya parpadeo. Cada token se define una sola vez con light-dark(),
+ * que resuelve según el color-scheme activo.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(
+        :root:not([data-theme="light"]),
+        :root:not([data-theme="light"]) *
+      ) {
+      @slot;
+    }
+  }
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light dark;
+  --background: light-dark(#fafafa, #0a0a0a);
+  --foreground: light-dark(#171717, #ededed);
+  --surface: light-dark(#ffffff, #18181b);
+  --muted: light-dark(#71717a, #a1a1aa);
+  --border: light-dark(#e4e4e7, #27272a);
+  --accent: light-dark(#c2410c, #fb923c);
+  --accent-foreground: light-dark(#ffffff, #0a0a0a);
+  --danger: light-dark(#dc2626, #f87171);
+  --right-hand: light-dark(#2563eb, #3b82f6);
+  --left-hand: light-dark(#db2777, #ec4899);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-right-hand: var(--right-hand);
+  --color-left-hand: var(--left-hand);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
