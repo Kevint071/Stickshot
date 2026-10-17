@@ -3,12 +3,14 @@ import { z } from "zod";
 import { exerciseLogs, exercises, practiceDays } from "@/db/schema";
 import type { Db } from "@/db/types";
 import { isUuid } from "@/lib/ids";
+import { type Pattern, parsePattern, patternSchema } from "@/lib/pattern";
 
 export type PickerExercise = {
   id: string;
   name: string;
   custom: boolean;
   lastPracticed: string | null;
+  pattern: Pattern | null;
 };
 
 const collator = new Intl.Collator("es", { sensitivity: "base" });
@@ -31,6 +33,7 @@ export async function listExercisesForPicker(
       id: exercises.id,
       name: exercises.name,
       ownerId: exercises.userId,
+      pattern: exercises.pattern,
       lastDate: max(practiceDays.date),
       lastCreatedAt: max(exerciseLogs.createdAt),
     })
@@ -62,6 +65,7 @@ export async function listExercisesForPicker(
       name: row.name,
       custom: row.ownerId !== null,
       lastPracticed: row.lastDate,
+      pattern: parsePattern(row.pattern),
     }));
 }
 
@@ -72,11 +76,23 @@ export async function findVisibleExercise(
 ) {
   if (!isUuid(exerciseId)) return null;
   const [exercise] = await db
-    .select({ id: exercises.id, name: exercises.name })
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      ownerId: exercises.userId,
+      pattern: exercises.pattern,
+    })
     .from(exercises)
     .where(and(eq(exercises.id, exerciseId), visibleTo(userId)))
     .limit(1);
-  return exercise ?? null;
+  if (!exercise) return null;
+  return {
+    id: exercise.id,
+    name: exercise.name,
+    // Solo los propios se pueden editar; los estándar son de todos.
+    custom: exercise.ownerId !== null,
+    pattern: parsePattern(exercise.pattern),
+  };
 }
 
 export const exerciseNameSchema = z
@@ -123,8 +139,35 @@ export async function createCustomExercise(
   if (!created) return { ok: false, error: DUPLICATE };
   return {
     ok: true,
-    exercise: { ...created, custom: true, lastPracticed: null },
+    exercise: { ...created, custom: true, lastPracticed: null, pattern: null },
   };
+}
+
+export type SavePatternResult =
+  | { ok: true; pattern: Pattern }
+  | { ok: false; error: string }
+  | { ok: false; notFound: true };
+
+/** Guarda el patrón de un ejercicio propio. Los estándar y los ajenos no se tocan. */
+export async function saveExercisePattern(
+  db: Db,
+  userId: string,
+  exerciseId: string,
+  input: unknown,
+): Promise<SavePatternResult> {
+  if (!isUuid(exerciseId)) return { ok: false, notFound: true };
+  const parsed = patternSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+  const [saved] = await db
+    .update(exercises)
+    .set({ pattern: parsed.data })
+    .where(and(eq(exercises.id, exerciseId), eq(exercises.userId, userId)))
+    .returning({ id: exercises.id });
+  return saved
+    ? { ok: true, pattern: parsed.data }
+    : { ok: false, notFound: true };
 }
 
 /** Ejercicios que el usuario ha registrado alguna vez, del más reciente al más antiguo. */

@@ -7,6 +7,7 @@ import { dateSchema } from "@/lib/validation/log";
 import { dayDatesBetween } from "@/server/days";
 import { listExercisesForPicker } from "@/server/exercises";
 import { getPracticeTargets } from "@/server/progress";
+import { getSoundSettings } from "@/server/settings";
 
 function shiftDays(date: Date, days: number) {
   const copy = new Date(date);
@@ -34,12 +35,14 @@ export default async function RegisterPage({
   const db = getDb();
   // El servidor no conoce el "hoy" del dispositivo: se envían las fechas con día
   // alrededor de hoy en UTC para que el formulario sepa si debe pedir el estado de ánimo.
-  const [exercises, recentDates, chosenDates, targets] = await Promise.all([
-    listExercisesForPicker(db, userId),
-    dayDatesBetween(db, userId, shiftDays(now, -2), shiftDays(now, 1)),
-    date ? dayDatesBetween(db, userId, date, date) : Promise.resolve([]),
-    getPracticeTargets(db, userId),
-  ]);
+  const [exercises, recentDates, chosenDates, targets, sound] =
+    await Promise.all([
+      listExercisesForPicker(db, userId),
+      dayDatesBetween(db, userId, shiftDays(now, -2), shiftDays(now, 1)),
+      date ? dayDatesBetween(db, userId, date, date) : Promise.resolve([]),
+      getPracticeTargets(db, userId),
+      getSoundSettings(db, userId),
+    ]);
 
   // Un reto del inicio llega como ?ejercicio=…&bpm=…&mano=…&sub=…
   const exerciseId = one(params.ejercicio);
@@ -66,6 +69,7 @@ export default async function RegisterPage({
         existingDates={[...recentDates, ...chosenDates]}
         initial={initial}
         targets={targets}
+        sound={sound}
       />
     </>
   );

@@ -24,8 +24,13 @@
  * Concepto: un instrumento de precisión. Papel cálido y grafito en vez de
  * blanco y negro puros, un único naranja señal (el LED del metrónomo) y paneles
  * oscuros tipo "aparato" que no cambian con el tema.
+ *
+ * [data-scheme] vuelve a declarar los tokens en ese elemento: light-dark() se
+ * resuelve donde se declara la variable, así que una muestra con su propio
+ * color-scheme pinta ese tema aunque la app esté en el otro.
  */
-:root {
+:root,
+[data-scheme] {
   color-scheme: light dark;
   --background: light-dark(#f2efe9, #0b0a09);
   --surface: light-dark(#fffdf9, #141311);
@@ -58,6 +63,14 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-scheme="light"] {
+  color-scheme: light;
+}
+
+[data-scheme="dark"] {
   color-scheme: dark;
 }
 
@@ -99,6 +112,7 @@
   --animate-draw: draw 1.6s var(--ease-out-expo) 0.2s both;
   --animate-wipe: wipe 1.6s var(--ease-out-expo) 0.15s backwards;
   --animate-swing: swing 1.2s ease-in-out infinite alternate;
+  --animate-needle: needle 1.8s var(--ease-spring) 0.35s both;
 }
 
 @keyframes rise {
@@ -175,6 +189,13 @@
   }
   to {
     transform: rotate(24deg);
+  }
+}
+
+/* La aguja sale del tope izquierdo hasta su ángulo (--angle). */
+@keyframes needle {
+  from {
+    transform: rotate(0deg);
   }
 }
 

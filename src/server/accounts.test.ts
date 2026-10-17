@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, test } from "vitest";
 import { users } from "@/db/schema";
-import { setupTestDb } from "@/test/db";
-import { authenticateUser, registerUser } from "./accounts";
+import { createUser, setupTestDb } from "@/test/db";
+import { authenticateUser, getAccountSummary, registerUser } from "./accounts";
+import { listExercisesForPicker } from "./exercises";
+import { type SaveLogInput, saveLog } from "./logs";
 
 const t = setupTestDb();
 
@@ -82,5 +84,67 @@ describe("authenticateUser", () => {
         password: "tresillos",
       }),
     ).toBeNull();
+  });
+});
+
+describe("getAccountSummary", () => {
+  async function practice(userId: string, overrides: Partial<SaveLogInput>) {
+    const list = await listExercisesForPicker(t.db, userId);
+    const result = await saveLog(t.db, userId, {
+      exerciseId: list[0].id,
+      date: "2026-10-15",
+      hand: "right",
+      bpm: 120,
+      subdivision: "sixteenth",
+      durationSeconds: 60,
+      sets: 1,
+      cleanliness: "clean",
+      note: null,
+      mood: 3,
+      ...overrides,
+    });
+    if (result.status !== "saved") throw new Error(result.status);
+  }
+
+  test("cuenta vacía: fecha de alta y totales a cero", async () => {
+    const ana = await createUser(t.db, "ana@ejemplo.com");
+    const summary = await getAccountSummary(t.db, ana);
+    expect(summary).toMatchObject({
+      email: "ana@ejemplo.com",
+      seconds: 0,
+      days: 0,
+      logs: 0,
+      exercises: 0,
+    });
+    expect(summary?.memberSince).toBeInstanceOf(Date);
+  });
+
+  test("suma tiempo, días, registros y ejercicios distintos, solo del usuario", async () => {
+    const ana = await createUser(t.db, "ana@ejemplo.com");
+    const bea = await createUser(t.db, "bea@ejemplo.com");
+    const [first, second] = await listExercisesForPicker(t.db, ana);
+    await practice(ana, { exerciseId: first.id, sets: 3 });
+    await practice(ana, { exerciseId: second.id, durationSeconds: 30 });
+    await practice(ana, { exerciseId: first.id, date: "2026-10-16" });
+    await practice(bea, {});
+    expect(await getAccountSummary(t.db, ana)).toMatchObject({
+      seconds: 60 * 3 + 30 + 60,
+      days: 2,
+      logs: 3,
+      exercises: 2,
+    });
+  });
+
+  test("usuario inexistente: sin correo ni alta y totales a cero", async () => {
+    expect(
+      await getAccountSummary(t.db, "00000000-0000-4000-8000-000000000000"),
+    ).toEqual({
+      email: undefined,
+      memberSince: undefined,
+      seconds: 0,
+      days: 0,
+      logs: 0,
+      exercises: 0,
+    });
   });
 });

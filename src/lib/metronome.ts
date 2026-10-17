@@ -1,10 +1,19 @@
+import type { PracticeSound, SoundKit } from "@/db/schema";
+import { type Step, type Stroke, stepAt } from "@/lib/pattern";
+import { SnareVoice } from "@/lib/snare";
+
 /**
  * Metrónomo con Web Audio. Los clics se programan con antelación sobre el reloj
  * del audio (no con setInterval directo), así el pulso no se desfasa aunque el
  * hilo principal esté ocupado. Solo funciona en el navegador.
+ *
+ * Con un patrón, el mismo reloj toca también la caja: cada nota de la
+ * subdivisión es un paso del patrón. Un solo planificador evita desfases.
  */
 
 export type Tick = {
+  /** Nota desde que arrancó (0, 1, 2…): con un patrón, su paso es index % largo. */
+  index: number;
   /** Momento del clic en el reloj de AudioContext (segundos). */
   time: number;
   /** Pulso total desde que arrancó (0, 1, 2…). */
@@ -24,8 +33,16 @@ export class Metronome {
   beatsPerBar = 4;
   subdivisionAudible = true;
   volume = 0.9;
+  /** Pasos del patrón, ya en espejo según la mano inicial. */
+  pattern: Step[] | undefined;
+  /** Qué suena: el clic, la caja con el patrón o ambos. Sin patrón, siempre el clic. */
+  sound: PracticeSound = "click";
+  kit: SoundKit = "acoustic";
+  /** Volumen de la ghost note en % del acento. */
+  ghostVolume = 20;
 
   private ctx: AudioContext | undefined;
+  private snare: SnareVoice | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private nextTime = 0;
   private tick = 0;
@@ -46,10 +63,17 @@ export class Metronome {
     return this.playing ? Math.max(0, this.now() - this.startedAt) : 0;
   }
 
-  async start() {
-    if (this.playing) return;
+  private async audio() {
     this.ctx ??= new AudioContext({ latencyHint: "interactive" });
     if (this.ctx.state === "suspended") await this.ctx.resume();
+    this.snare ??= new SnareVoice(this.ctx);
+    return this.ctx;
+  }
+
+  async start() {
+    if (this.playing) return;
+    await this.audio();
+    if (!this.ctx) return;
     this.tick = 0;
     this.queue = [];
     this.nextTime = this.ctx.currentTime + 0.08;
@@ -77,10 +101,27 @@ export class Metronome {
     return head && head.time <= now ? head : undefined;
   }
 
+  /** Toca un golpe suelto ahora (y otro detrás) para oír cómo suena. */
+  async preview(stroke: Stroke) {
+    const ctx = await this.audio();
+    const t = ctx.currentTime + 0.03;
+    for (const at of [t, t + 0.3])
+      this.snare?.hit(at, stroke, this.snareOptions());
+  }
+
   close() {
     this.stop();
     void this.ctx?.close();
     this.ctx = undefined;
+    this.snare = undefined;
+  }
+
+  private snareOptions() {
+    return {
+      kit: this.kit,
+      ghostVolume: this.ghostVolume,
+      stepSeconds: 60 / this.bpm / Math.max(1, this.notesPerBeat),
+    };
   }
 
   private schedule() {
@@ -91,12 +132,20 @@ export class Metronome {
       const sub = this.tick % notes;
       const beat = Math.floor(this.tick / notes);
       const tick: Tick = {
+        index: this.tick,
         time: this.nextTime,
         beat,
         beatInBar: beat % this.beatsPerBar,
         sub,
       };
-      if (sub === 0 || this.subdivisionAudible) this.click(ctx, tick);
+      const pattern = this.pattern?.length ? this.pattern : undefined;
+      const clicks = !pattern || this.sound !== "pattern";
+      if (clicks && (sub === 0 || this.subdivisionAudible))
+        this.click(ctx, tick);
+      if (pattern && this.sound !== "click") {
+        const step = pattern[stepAt(this.tick, pattern.length)];
+        if (step) this.snare?.hit(tick.time, step, this.snareOptions());
+      }
       this.queue.push(tick);
       this.nextTime += 60 / this.bpm / notes;
       this.tick += 1;

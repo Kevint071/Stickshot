@@ -1,10 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { PracticeSound } from "@/db/schema";
+import { saveSoundSettingsAction } from "@/lib/actions/sound";
 import { tierLabel } from "@/lib/labels";
 import { Metronome, tapTempo } from "@/lib/metronome";
+import { forLeadHand, type Pattern, type PatternHand } from "@/lib/pattern";
 import type { Tier } from "@/lib/records";
+import {
+  DEFAULT_SOUND_SETTINGS,
+  type SoundSettings,
+} from "@/lib/sound-settings";
 import { challengeStep } from "@/lib/stats";
 import {
   MinusIcon,
@@ -16,8 +23,16 @@ import {
   TrophyIcon,
   VolumeIcon,
 } from "./icons";
+import { PatternGrid } from "./pattern-grid";
+import { useSoundingStep } from "./pattern-player";
 
 export type Serie = { bpm: number; seconds: number };
+
+const SOUND_MODES: { value: PracticeSound; label: string }[] = [
+  { value: "click", label: "Clic" },
+  { value: "pattern", label: "Patrón" },
+  { value: "both", label: "Ambos" },
+];
 
 const MIN_BPM = 20;
 const MAX_BPM = 400;
@@ -48,11 +63,19 @@ export function PracticeConsole({
   record,
   series,
   onSeries,
+  pattern,
+  lead = "R",
+  sound = DEFAULT_SOUND_SETTINGS,
 }: {
   bpm: number;
   onBpmChange: (bpm: number) => void;
   notesPerBeat: number;
   exerciseName?: string;
+  /** Patrón del ejercicio elegido, si tiene. */
+  pattern?: Pattern | null;
+  /** Mano inicial del formulario: el patrón se toca en espejo si es la izquierda. */
+  lead?: PatternHand;
+  sound?: SoundSettings;
   /** Récord del ejercicio para la mano y subdivisión elegidas, en BPM. */
   record?: { bpm: number; tier: Tier };
   series: Serie[];
@@ -61,6 +84,10 @@ export function PracticeConsole({
   const [engine] = useState(() => new Metronome());
   const [playing, setPlaying] = useState(false);
   const [subAudible, setSubAudible] = useState(true);
+  const [mode, setMode] = useState(sound.practiceSound);
+  const [, startSaveMode] = useTransition();
+  const steps = pattern ? forLeadHand(pattern, lead).steps : undefined;
+  const step = useSoundingStep(engine, playing, steps?.length ?? 0);
   const taps = useRef<number[]>([]);
   const wakeLock = useRef<WakeLockSentinel | null>(null);
 
@@ -78,6 +105,22 @@ export function PracticeConsole({
   useEffect(() => {
     engine.subdivisionAudible = subAudible;
   }, [engine, subAudible]);
+  // Sin patrón el motor toca siempre el clic, sea cual sea el modo guardado.
+  useEffect(() => {
+    engine.pattern = steps;
+    engine.sound = mode;
+    engine.kit = sound.soundKit;
+    engine.ghostVolume = sound.ghostVolume;
+  });
+
+  function chooseMode(next: PracticeSound) {
+    const previous = mode;
+    setMode(next);
+    startSaveMode(async () => {
+      const result = await saveSoundSettingsAction({ practiceSound: next });
+      if (!result.ok) setMode(previous);
+    });
+  }
   useEffect(() => () => engine.close(), [engine]);
 
   // Bucle visual: lee el último clic que ha sonado y mueve péndulo, LEDs y reloj.
@@ -375,6 +418,62 @@ export function PracticeConsole({
           Subdiv.
         </button>
       </div>
+
+      <fieldset className="mt-4">
+        <legend className="sr-only">Qué suena</legend>
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="label-mono text-panel-muted">
+            Suena
+          </span>
+          <div className="grid flex-1 grid-cols-3 gap-1 rounded-2xl border border-panel-border bg-panel-2 p-1">
+            {SOUND_MODES.map(({ value, label }) => {
+              const disabled = value !== "click" && !pattern;
+              const checked = (pattern ? mode : "click") === value;
+              return (
+                <label
+                  key={value}
+                  className={`relative grid h-10 place-items-center rounded-xl text-sm font-medium transition-colors has-focus-visible:ring-2 has-focus-visible:ring-accent ${
+                    disabled
+                      ? "cursor-not-allowed text-panel-muted/50"
+                      : checked
+                        ? "cursor-pointer bg-panel-border text-panel-foreground"
+                        : "cursor-pointer text-panel-muted hover:text-panel-foreground"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="practice-sound"
+                    value={value}
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={() => chooseMode(value)}
+                    className="sr-only"
+                  />
+                  {label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+        {!pattern ? (
+          <p className="mt-2 text-xs text-panel-muted">
+            {exerciseName
+              ? "Este ejercicio no tiene patrón: suena el clic."
+              : "Elige un ejercicio con patrón para oír la caja."}
+          </p>
+        ) : null}
+      </fieldset>
+
+      {pattern && steps ? (
+        <div className="mt-5">
+          <PatternGrid
+            pattern={pattern}
+            steps={steps}
+            notesPerBeat={notesPerBeat}
+            active={step}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-5 rounded-2xl border border-panel-border bg-panel-2/60 p-4">
         {record ? (

@@ -5,6 +5,7 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   smallint,
@@ -55,6 +56,9 @@ export const exercises = pgTable(
     normalizedName: text("normalized_name")
       .notNull()
       .generatedAlwaysAs(sql`lower(btrim(name))`),
+    // Patrón de golpes (src/lib/pattern). Se valida al escribir y al leer:
+    // null o inválido = el ejercicio no tiene patrón.
+    pattern: jsonb("pattern").$type<unknown>(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -152,3 +156,43 @@ export const exerciseLogs = pgTable(
 export type Hand = (typeof handEnum.enumValues)[number];
 export type Subdivision = (typeof subdivisionEnum.enumValues)[number];
 export type Cleanliness = (typeof cleanlinessEnum.enumValues)[number];
+
+export const soundKitEnum = pgEnum("sound_kit", [
+  "acoustic",
+  "pad",
+  "marching",
+  "deep",
+]);
+
+export const practiceSoundEnum = pgEnum("practice_sound", [
+  "click",
+  "pattern",
+  "both",
+]);
+
+// Preferencias de sonido, una fila por usuario. Sin fila valen los valores por
+// defecto, así que no hace falta crearla al registrarse.
+export const userSettings = pgTable(
+  "user_settings",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    soundKit: soundKitEnum("sound_kit").notNull().default("acoustic"),
+    // Volumen de la ghost note en % del acento.
+    ghostVolume: smallint("ghost_volume").notNull().default(20),
+    practiceSound: practiceSoundEnum("practice_sound")
+      .notNull()
+      .default("click"),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check(
+      "user_settings_ghost_volume_range",
+      sql`${t.ghostVolume} between 5 and 60`,
+    ),
+  ],
+);
+
+export type SoundKit = (typeof soundKitEnum.enumValues)[number];
+export type PracticeSound = (typeof practiceSoundEnum.enumValues)[number];

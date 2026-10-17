@@ -1,6 +1,14 @@
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, test } from "vitest";
+import { exercises } from "@/db/schema";
+import { notation, RUDIMENT_PATTERNS } from "@/lib/pattern/rudiments";
 import { createUser, setupTestDb } from "@/test/db";
-import { createCustomExercise, listExercisesForPicker } from "./exercises";
+import {
+  createCustomExercise,
+  findVisibleExercise,
+  listExercisesForPicker,
+  saveExercisePattern,
+} from "./exercises";
 import { saveLog } from "./logs";
 
 const t = setupTestDb();
@@ -101,5 +109,74 @@ describe("createCustomExercise", () => {
     expect((await createCustomExercise(t.db, ana, "x".repeat(81))).ok).toBe(
       false,
     );
+  });
+});
+
+describe("patrones", () => {
+  const example = notation("sixteenth", "R R> L L>");
+
+  test("los 40 rudimentos estándar tienen su patrón tras las migraciones", async () => {
+    const list = await listExercisesForPicker(t.db, ana);
+    const standard = list.filter((e) => !e.custom);
+    expect(standard).toHaveLength(40);
+    for (const exercise of standard) {
+      expect(exercise.pattern, exercise.name).toEqual(
+        RUDIMENT_PATTERNS[exercise.name],
+      );
+    }
+  });
+
+  test("un patrón corrupto en la BD se lee como sin patrón", async () => {
+    const created = await createCustomExercise(t.db, ana, "Roto");
+    if (!created.ok) throw new Error(created.error);
+    await t.db
+      .update(exercises)
+      .set({ pattern: { steps: "RLRR" } })
+      .where(eq(exercises.id, created.exercise.id));
+    const found = await findVisibleExercise(t.db, ana, created.exercise.id);
+    expect(found).toMatchObject({ custom: true, pattern: null });
+  });
+
+  test("el dueño guarda el patrón de su ejercicio y se lee igual", async () => {
+    const created = await createCustomExercise(t.db, ana, "Acentos dobles");
+    if (!created.ok) throw new Error(created.error);
+    expect(created.exercise.pattern).toBeNull();
+    const result = await saveExercisePattern(
+      t.db,
+      ana,
+      created.exercise.id,
+      example,
+    );
+    expect(result).toEqual({ ok: true, pattern: example });
+    const found = await findVisibleExercise(t.db, ana, created.exercise.id);
+    expect(found?.pattern).toEqual(example);
+  });
+
+  test("no se puede guardar en un ejercicio ajeno ni en un estándar", async () => {
+    const created = await createCustomExercise(t.db, bea, "De Bea");
+    if (!created.ok) throw new Error(created.error);
+    expect(
+      await saveExercisePattern(t.db, ana, created.exercise.id, example),
+    ).toEqual({ ok: false, notFound: true });
+    const paradiddle = await idOf("Single Paradiddle");
+    expect(await saveExercisePattern(t.db, ana, paradiddle, example)).toEqual({
+      ok: false,
+      notFound: true,
+    });
+    const found = await findVisibleExercise(t.db, ana, paradiddle);
+    expect(found?.pattern).toEqual(RUDIMENT_PATTERNS["Single Paradiddle"]);
+  });
+
+  test("rechaza un patrón inválido", async () => {
+    const created = await createCustomExercise(t.db, ana, "Vacío");
+    if (!created.ok) throw new Error(created.error);
+    const result = await saveExercisePattern(t.db, ana, created.exercise.id, {
+      subdivision: "sixteenth",
+      steps: [],
+    });
+    expect(result).toEqual({
+      ok: false,
+      error: "El patrón necesita al menos un golpe",
+    });
   });
 });

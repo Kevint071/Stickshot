@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CountUp } from "@/components/count-up";
-import { ChevronLeftIcon, MetronomeIcon } from "@/components/icons";
+import { ChevronLeftIcon, MetronomeIcon, PencilIcon } from "@/components/icons";
+import { PatternPlayer } from "@/components/pattern-player";
 import { RecordChart } from "@/components/record-chart";
 import { TierTabs } from "@/components/tier-tabs";
 import {
@@ -15,6 +16,7 @@ import { getDb } from "@/db";
 import { verifySession } from "@/lib/dal";
 import { HAND_LABELS, tierLabel } from "@/lib/labels";
 import { getExerciseProgress } from "@/server/progress";
+import { getSoundSettings } from "@/server/settings";
 
 export default async function ExercisePage({
   params,
@@ -22,12 +24,16 @@ export default async function ExercisePage({
 }: PageProps<"/ejercicios/[id]">) {
   const { userId } = await verifySession();
   const [{ id }, { tramo }] = await Promise.all([params, searchParams]);
-  const progress = await getExerciseProgress(
-    getDb(),
-    userId,
-    id,
-    typeof tramo === "string" ? tramo : undefined,
-  );
+  const db = getDb();
+  const [progress, sound] = await Promise.all([
+    getExerciseProgress(
+      db,
+      userId,
+      id,
+      typeof tramo === "string" ? tramo : undefined,
+    ),
+    getSoundSettings(db, userId),
+  ]);
   if (!progress) notFound();
   const { exercise, tiers, tier, history, current } = progress;
 
@@ -53,6 +59,46 @@ export default async function ExercisePage({
         }
       />
 
+      {exercise.pattern || exercise.custom ? (
+        <section
+          aria-labelledby="pattern-title"
+          className="mb-8 animate-rise lg:mb-10"
+          style={stagger(2)}
+        >
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 id="pattern-title" className="font-display text-xl">
+              Patrón
+            </h2>
+            {exercise.custom && exercise.pattern ? (
+              <Link
+                href={`/ejercicios/${exercise.id}/patron`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink"
+              >
+                <PencilIcon size={16} /> Editar patrón
+              </Link>
+            ) : null}
+          </div>
+          {exercise.pattern ? (
+            <PatternPlayer pattern={exercise.pattern} sound={sound} />
+          ) : (
+            <EmptyState
+              title="Aún no tiene patrón"
+              action={
+                <Link
+                  href={`/ejercicios/${exercise.id}/patron`}
+                  className={buttonClass.primary}
+                >
+                  <PencilIcon size={18} /> Dibujar patrón
+                </Link>
+              }
+            >
+              Dibújalo golpe a golpe para verlo y oírlo antes de practicar.
+            </EmptyState>
+          )}
+        </section>
+      ) : null}
+
+      <h2 className="mb-4 font-display text-xl">Récords</h2>
       {tier === undefined ? (
         <EmptyState title="Aún no hay récords">
           Cuentan los registros limpios o casi de al menos 15 segundos.

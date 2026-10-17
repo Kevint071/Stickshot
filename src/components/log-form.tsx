@@ -17,6 +17,10 @@ import {
   SUBDIVISION_LABELS,
 } from "@/lib/labels";
 import { bpmFor, NOTES_PER_BEAT } from "@/lib/records";
+import {
+  DEFAULT_SOUND_SETTINGS,
+  type SoundSettings,
+} from "@/lib/sound-settings";
 import type { PickerExercise } from "@/server/exercises";
 import type { ExerciseTarget } from "@/server/progress";
 import { ExercisePicker } from "./exercise-picker";
@@ -80,6 +84,7 @@ export function LogForm({
   initial = {},
   logId,
   targets,
+  sound = DEFAULT_SOUND_SETTINGS,
 }: {
   exercises: PickerExercise[];
   /** Fechas en las que el usuario ya tiene día (no hace falta pedir el estado de ánimo). */
@@ -89,6 +94,8 @@ export function LogForm({
   logId?: string;
   /** Récords por ejercicio: con ellos el formulario va junto al metrónomo. */
   targets?: Record<string, ExerciseTarget>;
+  /** Preferencias de sonido del usuario (kit, ghost y modo de Practicar). */
+  sound?: SoundSettings;
 }) {
   const router = useRouter();
   const practiceMode = targets !== undefined;
@@ -261,6 +268,7 @@ export function LogForm({
         onChange={chooseExercise}
         onCreated={(created) => setExercises((list) => [created, ...list])}
         error={error("exerciseId")}
+        sound={sound}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -514,6 +522,9 @@ export function LogForm({
               record={record}
               series={series}
               onSeries={receiveSeries}
+              pattern={exercise?.pattern}
+              lead={hand === "left" ? "L" : "R"}
+              sound={sound}
             />
           </div>
           {form}

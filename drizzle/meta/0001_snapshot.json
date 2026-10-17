@@ -142,41 +142,27 @@
         "exercise_logs_user_id_users_id_fk": {
           "name": "exercise_logs_user_id_users_id_fk",
           "tableFrom": "exercise_logs",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "exercise_logs_exercise_id_exercises_id_fk": {
           "name": "exercise_logs_exercise_id_exercises_id_fk",
           "tableFrom": "exercise_logs",
-          "columnsFrom": [
-            "exercise_id"
-          ],
+          "columnsFrom": ["exercise_id"],
           "tableTo": "exercises",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "exercise_logs_day_user_fk": {
           "name": "exercise_logs_day_user_fk",
           "tableFrom": "exercise_logs",
-          "columnsFrom": [
-            "day_id",
-            "user_id"
-          ],
+          "columnsFrom": ["day_id", "user_id"],
           "tableTo": "practice_days",
-          "columnsTo": [
-            "id",
-            "user_id"
-          ],
+          "columnsTo": ["id", "user_id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -246,13 +232,9 @@
         "exercises_user_id_users_id_fk": {
           "name": "exercises_user_id_users_id_fk",
           "tableFrom": "exercises",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -261,10 +243,7 @@
       "uniqueConstraints": {
         "exercises_owner_name_unique": {
           "name": "exercises_owner_name_unique",
-          "columns": [
-            "user_id",
-            "normalized_name"
-          ],
+          "columns": ["user_id", "normalized_name"],
           "nullsNotDistinct": true
         }
       },
@@ -332,13 +311,9 @@
         "practice_days_user_id_users_id_fk": {
           "name": "practice_days_user_id_users_id_fk",
           "tableFrom": "practice_days",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -347,18 +322,12 @@
       "uniqueConstraints": {
         "practice_days_user_date_unique": {
           "name": "practice_days_user_date_unique",
-          "columns": [
-            "user_id",
-            "date"
-          ],
+          "columns": ["user_id", "date"],
           "nullsNotDistinct": false
         },
         "practice_days_id_user_unique": {
           "name": "practice_days_id_user_unique",
-          "columns": [
-            "id",
-            "user_id"
-          ],
+          "columns": ["id", "user_id"],
           "nullsNotDistinct": false
         }
       },
@@ -426,9 +395,7 @@
       "uniqueConstraints": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "nullsNotDistinct": false
         }
       },
@@ -446,19 +413,12 @@
     "public.cleanliness": {
       "name": "cleanliness",
       "schema": "public",
-      "values": [
-        "dirty",
-        "almost",
-        "clean"
-      ]
+      "values": ["dirty", "almost", "clean"]
     },
     "public.hand": {
       "name": "hand",
       "schema": "public",
-      "values": [
-        "right",
-        "left"
-      ]
+      "values": ["right", "left"]
     },
     "public.subdivision": {
       "name": "subdivision",

@@ -72,7 +72,7 @@ export function Heatmap({ weeks }: { weeks: HeatCell[][] }) {
                       ? undefined
                       : `${formatDay(cell.date)}: ${minutesLabel(cell.seconds)}`
                   }
-                  className={`block animate-pop rounded-[4px] ${CELL} ${
+                  className={`block animate-pop rounded-sm ${CELL} ${
                     cell.future ? "opacity-0" : LEVEL_CLASS[cell.level]
                   }`}
                   style={{ "--i": w * 7 + d } as React.CSSProperties}

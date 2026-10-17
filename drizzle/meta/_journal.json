@@ -15,6 +15,20 @@
       "when": 1791382422432,
       "tag": "0001_seed-rudiments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792216843464,
+      "tag": "0002_patterns-and-settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792216900288,
+      "tag": "0003_seed-patterns",
+      "breakpoints": true
     }
   ]
 }

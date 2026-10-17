@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { users } from "@/db/schema";
+import { exerciseLogs, users } from "@/db/schema";
 import type { Db } from "@/db/types";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
@@ -64,3 +64,27 @@ export async function authenticateUser(
     ? { id: user.id, email: user.email }
     : null;
 }
+
+/** Ficha de la cuenta para Ajustes: alta y lo tocado desde entonces. */
+export async function getAccountSummary(db: Db, userId: string) {
+  const [[user], [totals]] = await Promise.all([
+    db
+      .select({ email: users.email, memberSince: users.createdAt })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
+    db
+      .select({
+        seconds: sql<number>`coalesce(sum(${exerciseLogs.durationSeconds} * ${exerciseLogs.sets}), 0)::int`,
+        days: sql<number>`count(distinct ${exerciseLogs.dayId})::int`,
+        logs: sql<number>`count(*)::int`,
+        exercises: sql<number>`count(distinct ${exerciseLogs.exerciseId})::int`,
+      })
+      .from(exerciseLogs)
+      .where(eq(exerciseLogs.userId, userId)),
+  ]);
+  // Sin fila (sesión de una cuenta ya borrada): totales a cero, sin datos de alta.
+  return { email: user?.email, memberSince: user?.memberSince, ...totals };
+}
+
+export type AccountSummary = Awaited<ReturnType<typeof getAccountSummary>>;

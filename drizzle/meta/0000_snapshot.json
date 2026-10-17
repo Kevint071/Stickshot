@@ -143,12 +143,8 @@
           "name": "exercise_logs_user_id_users_id_fk",
           "tableFrom": "exercise_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -156,12 +152,8 @@
           "name": "exercise_logs_exercise_id_exercises_id_fk",
           "tableFrom": "exercise_logs",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -169,14 +161,8 @@
           "name": "exercise_logs_day_user_fk",
           "tableFrom": "exercise_logs",
           "tableTo": "practice_days",
-          "columnsFrom": [
-            "day_id",
-            "user_id"
-          ],
-          "columnsTo": [
-            "id",
-            "user_id"
-          ],
+          "columnsFrom": ["day_id", "user_id"],
+          "columnsTo": ["id", "user_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -247,12 +233,8 @@
           "name": "exercises_user_id_users_id_fk",
           "tableFrom": "exercises",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -262,10 +244,7 @@
         "exercises_owner_name_unique": {
           "name": "exercises_owner_name_unique",
           "nullsNotDistinct": true,
-          "columns": [
-            "user_id",
-            "normalized_name"
-          ]
+          "columns": ["user_id", "normalized_name"]
         }
       },
       "policies": {},
@@ -333,12 +312,8 @@
           "name": "practice_days_user_id_users_id_fk",
           "tableFrom": "practice_days",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -348,18 +323,12 @@
         "practice_days_user_date_unique": {
           "name": "practice_days_user_date_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "date"
-          ]
+          "columns": ["user_id", "date"]
         },
         "practice_days_id_user_unique": {
           "name": "practice_days_id_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "user_id"
-          ]
+          "columns": ["id", "user_id"]
         }
       },
       "policies": {},
@@ -427,9 +396,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -446,19 +413,12 @@
     "public.cleanliness": {
       "name": "cleanliness",
       "schema": "public",
-      "values": [
-        "dirty",
-        "almost",
-        "clean"
-      ]
+      "values": ["dirty", "almost", "clean"]
     },
     "public.hand": {
       "name": "hand",
       "schema": "public",
-      "values": [
-        "right",
-        "left"
-      ]
+      "values": ["right", "left"]
     },
     "public.subdivision": {
       "name": "subdivision",
