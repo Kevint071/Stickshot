@@ -44,3 +44,9 @@ next-env.d.ts
 # openspec
 *openspec*
 **opsx**
+
+#playwright
+.playwright-mcp
+
+# editor
+.vscode
