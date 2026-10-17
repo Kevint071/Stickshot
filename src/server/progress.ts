@@ -1,8 +1,15 @@
-import { and, eq, gte, inArray, ne } from "drizzle-orm";
-import { exerciseLogs, exercises, practiceDays } from "@/db/schema";
+import { and, desc, eq, gte, inArray, ne } from "drizzle-orm";
+import {
+  exerciseLogs,
+  exercises,
+  type Hand,
+  practiceDays,
+  type Subdivision,
+} from "@/db/schema";
 import type { Db } from "@/db/types";
 import {
   availableTiers,
+  bpmFor,
   computeBrokenRecords,
   computeHistory,
   currentRecords,
@@ -10,8 +17,10 @@ import {
   isTier,
   type RecordLog,
   TIERS,
+  type Tier,
 } from "@/lib/records";
-import { findVisibleExercise } from "./exercises";
+import { challengeStep } from "@/lib/stats";
+import { findVisibleExercise, listPracticedExercises } from "./exercises";
 
 export const RECENT_BROKEN_LIMIT = 20;
 
@@ -49,11 +58,15 @@ async function loadRecordLogs(
     );
 }
 
-/** Últimos récords batidos (máx. 20), del más reciente al más antiguo. */
-export async function getRecentBrokenRecords(db: Db, userId: string) {
+/** Últimos récords batidos (20 por defecto), del más reciente al más antiguo. */
+export async function getRecentBrokenRecords(
+  db: Db,
+  userId: string,
+  limit = RECENT_BROKEN_LIMIT,
+) {
   const broken = computeBrokenRecords(await loadRecordLogs(db, userId)).slice(
     0,
-    RECENT_BROKEN_LIMIT,
+    limit,
   );
   if (!broken.length) return [];
   const ids = [...new Set(broken.map((b) => b.exerciseId))];
@@ -96,5 +109,118 @@ export async function getExerciseProgress(
     tier,
     history: tier ? computeHistory(logs, exercise.id, tier) : [],
     current: tier ? currentRecords(logs, exercise.id, tier) : {},
+  };
+}
+
+/** Récords que batió un registro recién guardado (vacío si no batió ninguno). */
+export async function getBrokenRecordsForLog(
+  db: Db,
+  userId: string,
+  exerciseId: string,
+  logId: string,
+) {
+  const logs = await loadRecordLogs(db, userId, exerciseId);
+  return computeBrokenRecords(logs).filter((record) => record.logId === logId);
+}
+
+export type HandRecords = Partial<Record<Hand, number>>;
+export type ExerciseTarget = { tier: Tier; records: HandRecords };
+
+/** Tramo de referencia de cada ejercicio y récord por mano, para retarse al practicar. */
+function targetsFrom(logs: RecordLog[], exerciseIds: string[]) {
+  const targets = new Map<string, ExerciseTarget>();
+  for (const id of exerciseIds) {
+    const tier = defaultTier(availableTiers(logs, id));
+    if (tier)
+      targets.set(id, { tier, records: currentRecords(logs, id, tier) });
+  }
+  return targets;
+}
+
+export async function getPracticeTargets(
+  db: Db,
+  userId: string,
+): Promise<Record<string, ExerciseTarget>> {
+  const logs = await loadRecordLogs(db, userId);
+  const ids = [...new Set(logs.map((log) => log.exerciseId))];
+  return Object.fromEntries(targetsFrom(logs, ids));
+}
+
+/** Ejercicios practicados con su récord actual y la curva del tramo de referencia. */
+export async function getExerciseSummaries(db: Db, userId: string) {
+  const [practiced, logs] = await Promise.all([
+    listPracticedExercises(db, userId),
+    loadRecordLogs(db, userId),
+  ]);
+  const targets = targetsFrom(
+    logs,
+    practiced.map((exercise) => exercise.id),
+  );
+  return practiced.map((exercise) => {
+    const target = targets.get(exercise.id);
+    const history = target
+      ? computeHistory(logs, exercise.id, target.tier)
+      : [];
+    return {
+      ...exercise,
+      tier: target?.tier,
+      records: target?.records ?? {},
+      // Mejor de las dos manos en cada cambio de récord: basta para la miniatura.
+      curve: history.map((point) =>
+        Math.max(point.right ?? 0, point.left ?? 0),
+      ),
+    };
+  });
+}
+
+export type NextChallenge = {
+  exerciseId: string;
+  exerciseName: string;
+  hand: Hand;
+  subdivision: Subdivision;
+  tier?: Tier;
+  /** Récord actual en BPM con la subdivisión del último registro. */
+  recordBpm?: number;
+  targetBpm: number;
+};
+
+/**
+ * Siguiente reto: el último ejercicio anotado, con su misma mano y subdivisión,
+ * un poco por encima del récord (o del último tempo si aún no hay récord).
+ */
+export async function getNextChallenge(
+  db: Db,
+  userId: string,
+): Promise<NextChallenge | null> {
+  const [last] = await db
+    .select({
+      exerciseId: exerciseLogs.exerciseId,
+      exerciseName: exercises.name,
+      hand: exerciseLogs.hand,
+      subdivision: exerciseLogs.subdivision,
+      bpm: exerciseLogs.bpm,
+    })
+    .from(exerciseLogs)
+    .innerJoin(practiceDays, eq(practiceDays.id, exerciseLogs.dayId))
+    .innerJoin(exercises, eq(exercises.id, exerciseLogs.exerciseId))
+    .where(eq(exerciseLogs.userId, userId))
+    .orderBy(desc(practiceDays.date), desc(exerciseLogs.createdAt))
+    .limit(1);
+  if (!last) return null;
+
+  const logs = await loadRecordLogs(db, userId, last.exerciseId);
+  const target = targetsFrom(logs, [last.exerciseId]).get(last.exerciseId);
+  const record = target?.records[last.hand];
+  const recordBpm =
+    record !== undefined ? bpmFor(record, last.subdivision) : undefined;
+  const base = recordBpm ?? last.bpm;
+  return {
+    exerciseId: last.exerciseId,
+    exerciseName: last.exerciseName,
+    hand: last.hand,
+    subdivision: last.subdivision,
+    tier: target?.tier,
+    recordBpm,
+    targetBpm: Math.min(400, base + challengeStep(base)),
   };
 }

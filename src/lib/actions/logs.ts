@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { verifySession } from "@/lib/dal";
+import type { BrokenRecord } from "@/lib/records";
 import { type LogInput, logInputSchema } from "@/lib/validation/log";
 import {
   type CreateExerciseResult,
@@ -17,9 +18,15 @@ import {
   saveLog,
   updateLog,
 } from "@/server/logs";
+import { getBrokenRecordsForLog } from "@/server/progress";
+
+export type SavedRecord = Pick<
+  BrokenRecord,
+  "hand" | "tier" | "value" | "previous"
+>;
 
 export type LogActionResult =
-  | { status: "saved"; date: string }
+  | { status: "saved"; date: string; records: SavedRecord[] }
   | { status: "needsMood" }
   | { status: "notFound" }
   | { status: "invalid"; errors: Partial<Record<string, string[]>> };
@@ -44,7 +51,22 @@ async function persist(
   const result = await write(userId, parsed.data);
   if (result.status === "saved") {
     revalidateAll();
-    return { status: "saved", date: result.date };
+    const broken = await getBrokenRecordsForLog(
+      getDb(),
+      userId,
+      parsed.data.exerciseId,
+      result.logId,
+    );
+    return {
+      status: "saved",
+      date: result.date,
+      records: broken.map(({ hand, tier, value, previous }) => ({
+        hand,
+        tier,
+        value,
+        previous,
+      })),
+    };
   }
   return result;
 }

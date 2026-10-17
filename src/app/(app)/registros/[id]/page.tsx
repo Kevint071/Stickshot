@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteLogButton } from "@/components/delete-log-button";
+import { ChevronLeftIcon } from "@/components/icons";
 import { LogForm } from "@/components/log-form";
+import { PageHeader } from "@/components/ui";
 import { getDb } from "@/db";
 import { verifySession } from "@/lib/dal";
-import { formatDay } from "@/lib/labels";
+import { capitalize, formatDay } from "@/lib/labels";
 import { listExercisesForPicker } from "@/server/exercises";
 import { getLog } from "@/server/logs";
 
@@ -20,20 +22,28 @@ export default async function EditLogPage({
   const exercises = await listExercisesForPicker(db, userId);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href={`/historial/${log.date}`} className="text-sm text-muted">
-          ← {formatDay(log.date)}
-        </Link>
-        <h1 className="text-2xl font-bold">Corregir registro</h1>
-      </div>
-      <LogForm
-        logId={log.id}
-        exercises={exercises}
-        existingDates={[log.date]}
-        initial={log}
+    <>
+      <PageHeader
+        back={
+          <Link
+            href={`/historial/${log.date}`}
+            className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-foreground"
+          >
+            <ChevronLeftIcon size={16} /> {capitalize(formatDay(log.date))}
+          </Link>
+        }
+        title="Corregir registro"
+        description={log.exerciseName}
       />
-      <DeleteLogButton logId={log.id} />
-    </div>
+      <div className="max-w-2xl space-y-6">
+        <LogForm
+          logId={log.id}
+          exercises={exercises}
+          existingDates={[log.date]}
+          initial={log}
+        />
+        <DeleteLogButton logId={log.id} />
+      </div>
+    </>
   );
 }

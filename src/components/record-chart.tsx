@@ -10,7 +10,12 @@ import {
   YAxis,
 } from "recharts";
 import type { Hand } from "@/db/schema";
-import { formatDay, formatShortDay, HAND_LABELS } from "@/lib/labels";
+import {
+  capitalize,
+  formatDay,
+  formatShortDay,
+  HAND_LABELS,
+} from "@/lib/labels";
 import type { HistoryPoint } from "@/lib/records";
 
 // Colores validados (CVD y contraste) en claro y oscuro; ver --right-hand/--left-hand.
@@ -39,8 +44,8 @@ function ChartTooltip({
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm shadow-sm">
-      <p className="mb-1 font-medium capitalize">{formatDay(row.date)}</p>
+    <div className="rounded-xl border border-border bg-surface/95 px-3 py-2 text-sm shadow-[0_16px_32px_-16px_rgb(0_0_0/0.4)] backdrop-blur">
+      <p className="mb-1 font-medium">{capitalize(formatDay(row.date))}</p>
       {SERIES.map(({ hand, color, dash }) =>
         row[hand] !== undefined ? (
           <p key={hand} className="flex items-center gap-2">
@@ -98,7 +103,7 @@ export function RecordChart({
         <span className="text-muted">golpes por minuto</span>
       </figcaption>
 
-      <div className="h-64 w-full">
+      <div className="h-72 w-full animate-wipe">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={rows}
@@ -137,7 +142,7 @@ export function RecordChart({
                 name={HAND_LABELS[hand]}
                 type="stepAfter"
                 stroke={color}
-                strokeWidth={2}
+                strokeWidth={2.5}
                 strokeDasharray={dash}
                 dot={{
                   r: 4,
@@ -147,6 +152,8 @@ export function RecordChart({
                 }}
                 activeDot={{ r: 5, stroke: "var(--surface)", strokeWidth: 2 }}
                 connectNulls
+                // La entrada la anima la cortinilla del contenedor: la de
+                // Recharts depende de prefers-reduced-motion y a veces se queda en 0.
                 isAnimationActive={false}
               />
             ))}
@@ -155,7 +162,9 @@ export function RecordChart({
       </div>
 
       <details className="text-sm">
-        <summary className="cursor-pointer text-muted">Ver como tabla</summary>
+        <summary className="cursor-pointer text-muted transition-colors hover:text-foreground">
+          Ver como tabla
+        </summary>
         <table className="mt-2 w-full text-left tabular-nums">
           <thead className="text-muted">
             <tr>
@@ -170,7 +179,7 @@ export function RecordChart({
           <tbody>
             {[...history].reverse().map((point) => (
               <tr key={point.date} className="border-t border-border">
-                <td className="py-1 capitalize">{formatDay(point.date)}</td>
+                <td className="py-1">{capitalize(formatDay(point.date))}</td>
                 {series.map(({ hand }) => (
                   <td key={hand} className="py-1 text-right">
                     {point[hand] ?? "–"}

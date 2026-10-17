@@ -1,15 +1,24 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState, useTransition } from "react";
 import { createExerciseAction } from "@/lib/actions/logs";
+import { formatShortDay } from "@/lib/labels";
 import type { PickerExercise } from "@/server/exercises";
-import { inputClass } from "./ui";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  PlusIcon,
+  SearchIcon,
+} from "./icons";
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase("es");
 
 /**
- * Selector de ejercicio en una hoja a pantalla completa (sin cambiar de ruta).
- * La lista llega ya ordenada del servidor; el filtro mantiene ese orden.
+ * Selector de ejercicio: hoja que sube desde abajo en el móvil y diálogo
+ * centrado en escritorio (sin cambiar de ruta). La lista llega ya ordenada del
+ * servidor; el filtro mantiene ese orden.
  */
 export function ExercisePicker({
   exercises,
@@ -38,6 +47,19 @@ export function ExercisePicker({
   const practiced = filtered.filter((e) => e.lastPracticed);
   const rest = filtered.filter((e) => !e.lastPracticed);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   function choose(id: string) {
     onChange(id);
     setOpen(false);
@@ -58,82 +80,122 @@ export function ExercisePicker({
   }
 
   return (
-    <div className="space-y-1">
-      <span className="block text-sm font-medium">Ejercicio</span>
+    <div className="space-y-1.5">
+      <span className="label-mono block text-muted">Ejercicio</span>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`w-full rounded-xl border bg-surface px-3 py-3 text-left text-base ${
+        className={`group flex w-full items-center justify-between gap-3 rounded-2xl border bg-surface px-4 py-4 text-left transition-[border-color,transform] duration-200 hover:border-border-strong active:scale-[0.99] ${
           error ? "border-danger" : "border-border"
-        } ${selected ? "font-semibold" : "text-muted"}`}
+        }`}
       >
-        {selected?.name ?? "Elegir ejercicio"}
+        <span className="min-w-0">
+          <span
+            className={`block truncate text-lg ${selected ? "font-display" : "text-muted"}`}
+          >
+            {selected?.name ?? "Elegir ejercicio"}
+          </span>
+          {selected?.lastPracticed ? (
+            <span className="text-xs text-muted">
+              Última vez el {formatShortDay(selected.lastPracticed)}
+            </span>
+          ) : null}
+        </span>
+        <ChevronRightIcon className="shrink-0 text-muted transition-transform duration-300 group-hover:translate-x-1" />
       </button>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p className="animate-rise text-sm text-danger">{error}</p>
+      ) : null}
 
-      {open ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Elegir ejercicio"
-          className="fixed inset-0 z-50 flex flex-col bg-background"
-        >
-          <div className="mx-auto flex w-full max-w-md items-center gap-2 border-b border-border p-3">
-            <input
-              // biome-ignore lint/a11y/noAutofocus: la hoja se abre para buscar.
-              autoFocus
-              type="search"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setCreateError(undefined);
-              }}
-              placeholder="Buscar o crear ejercicio"
-              aria-label="Buscar ejercicio"
-              className={inputClass}
-            />
-            <button
+      <AnimatePresence>
+        {open ? (
+          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
+            <motion.button
               type="button"
+              aria-label="Cerrar"
               onClick={() => setOpen(false)}
-              className="px-2 py-2 text-sm text-muted"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Elegir ejercicio"
+              initial={{ y: "100%", opacity: 0.6 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 36 }}
+              className="relative flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-border bg-background shadow-2xl sm:max-h-[80dvh] sm:max-w-lg sm:rounded-[28px]"
             >
-              Cerrar
-            </button>
-          </div>
-          <div className="mx-auto w-full max-w-md flex-1 overflow-y-auto p-3">
-            {q && !exactMatch ? (
-              <div className="mb-3">
+              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong sm:hidden" />
+              <div className="flex items-center gap-2 border-b border-border p-4">
+                <div className="relative flex-1">
+                  <SearchIcon
+                    size={18}
+                    className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
+                  />
+                  <input
+                    // biome-ignore lint/a11y/noAutofocus: la hoja se abre para buscar.
+                    autoFocus
+                    type="search"
+                    value={query}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setCreateError(undefined);
+                    }}
+                    placeholder="Buscar o crear ejercicio"
+                    aria-label="Buscar ejercicio"
+                    className="w-full rounded-xl border border-border bg-surface py-3 pr-3 pl-10 text-base outline-none transition-[border-color,box-shadow] focus:border-accent focus:ring-4 focus:ring-accent/20"
+                  />
+                </div>
                 <button
                   type="button"
-                  onClick={create}
-                  disabled={creating}
-                  className="w-full rounded-xl border border-dashed border-accent px-3 py-3 text-left font-medium text-accent"
+                  onClick={() => setOpen(false)}
+                  aria-label="Cerrar"
+                  className="grid size-11 place-items-center rounded-xl text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
                 >
-                  {creating ? "Creando…" : `Crear «${query.trim()}»`}
+                  <CloseIcon />
                 </button>
-                {createError ? (
-                  <p className="mt-1 text-sm text-danger">{createError}</p>
+              </div>
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
+                {q && !exactMatch ? (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={create}
+                      disabled={creating}
+                      className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-accent/70 px-4 py-3.5 text-left font-medium text-accent-ink transition-colors hover:bg-accent/10"
+                    >
+                      <PlusIcon size={18} />
+                      {creating ? "Creando…" : `Crear «${query.trim()}»`}
+                    </button>
+                    {createError ? (
+                      <p className="mt-1 text-sm text-danger">{createError}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+                <ExerciseGroup
+                  title="Practicados"
+                  items={practiced}
+                  selectedId={value}
+                  onChoose={choose}
+                />
+                <ExerciseGroup
+                  title={practiced.length ? "Todos" : undefined}
+                  items={rest}
+                  selectedId={value}
+                  onChoose={choose}
+                />
+                {!filtered.length && !q ? (
+                  <p className="text-sm text-muted">No hay ejercicios.</p>
                 ) : null}
               </div>
-            ) : null}
-            <ExerciseGroup
-              title="Practicados"
-              items={practiced}
-              selectedId={value}
-              onChoose={choose}
-            />
-            <ExerciseGroup
-              title={practiced.length ? "Todos" : undefined}
-              items={rest}
-              selectedId={value}
-              onChoose={choose}
-            />
-            {!filtered.length && !q ? (
-              <p className="text-sm text-muted">No hay ejercicios.</p>
-            ) : null}
+            </motion.div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
@@ -151,30 +213,43 @@ function ExerciseGroup({
 }) {
   if (!items.length) return null;
   return (
-    <section className="mb-4">
-      {title ? (
-        <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-          {title}
-        </h2>
-      ) : null}
-      <ul className="divide-y divide-border rounded-xl border border-border bg-surface">
-        {items.map((exercise) => (
-          <li key={exercise.id}>
-            <button
-              type="button"
-              onClick={() => onChoose(exercise.id)}
-              aria-current={exercise.id === selectedId || undefined}
-              className={`flex w-full items-center justify-between px-3 py-3 text-left ${
-                exercise.id === selectedId ? "font-semibold text-accent" : ""
-              }`}
+    <section className="mb-5">
+      {title ? <h2 className="label-mono mb-2 text-muted">{title}</h2> : null}
+      <ul className="space-y-1">
+        {items.map((exercise, i) => {
+          const selected = exercise.id === selectedId;
+          return (
+            <motion.li
+              key={exercise.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i, 12) * 0.02 }}
             >
-              <span>{exercise.name}</span>
-              {exercise.custom ? (
-                <span className="text-xs text-muted">Propio</span>
-              ) : null}
-            </button>
-          </li>
-        ))}
+              <button
+                type="button"
+                onClick={() => onChoose(exercise.id)}
+                aria-current={selected || undefined}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-3 text-left transition-colors ${
+                  selected
+                    ? "bg-accent/10 font-semibold text-foreground"
+                    : "hover:bg-surface-2"
+                }`}
+              >
+                <span>{exercise.name}</span>
+                <span className="flex items-center gap-2 text-xs text-muted">
+                  {exercise.custom ? (
+                    <span className="rounded-md border border-border px-1.5 py-0.5">
+                      Propio
+                    </span>
+                  ) : null}
+                  {selected ? (
+                    <CheckIcon size={18} className="text-accent-ink" />
+                  ) : null}
+                </span>
+              </button>
+            </motion.li>
+          );
+        })}
       </ul>
     </section>
   );

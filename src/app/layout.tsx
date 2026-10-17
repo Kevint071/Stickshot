@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
+import { MotionProvider } from "@/components/motion-provider";
 import { parseTheme, THEME_COOKIE, themeAttribute } from "@/lib/theme";
 import "./globals.css";
 
@@ -14,14 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Display expandida (eje wdth) para titulares y cifras grandes: el aire de
+// panel de instrumento que Geist sola no da.
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  axes: ["wdth"],
+});
+
 export const metadata: Metadata = {
   title: "Stickshot",
-  description: "Registro de práctica de rudimentos y récords de velocidad",
+  description:
+    "Metrónomo, registro de práctica de rudimentos y récords de velocidad",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2efe9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+  ],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -30,12 +45,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       data-theme={themeAttribute(theme)}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${archivo.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      {/* Extensiones del navegador (p. ej. ColorZilla) añaden atributos a <body>
-          antes de hidratar; solo se ignoran los atributos de este elemento. */}
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+      {/* Extensiones del navegador (p. ej. ColorZilla, Dark Reader) añaden atributos
+          a <html> y <body> antes de hidratar; solo se ignoran los atributos de
+          estos elementos. */}
+      <body className="flex min-h-full flex-col" suppressHydrationWarning>
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

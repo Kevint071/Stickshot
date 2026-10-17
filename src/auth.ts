@@ -4,7 +4,9 @@ import { getDb } from "@/db";
 import { authenticateUser } from "@/server/accounts";
 
 const THIRTY_DAYS_SECONDS = 60 * 60 * 24 * 30;
-const PUBLIC_PATHS = ["/login", "/registro"];
+// La portada es pública; con sesión, todas mandan directo a la app.
+const PUBLIC_PATHS = ["/", "/login", "/registro"];
+export const HOME_PATH = "/inicio";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Credentials solo funciona con sesión JWT (cookie cifrada con AUTH_SECRET).
@@ -25,7 +27,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     authorized({ auth: session, request }) {
       const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname);
       if (isPublic && session) {
-        return Response.redirect(new URL("/", request.nextUrl));
+        return Response.redirect(new URL(HOME_PATH, request.nextUrl));
       }
       return isPublic || Boolean(session);
     },

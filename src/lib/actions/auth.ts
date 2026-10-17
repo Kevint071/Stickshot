@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { signIn, signOut } from "@/auth";
+import { HOME_PATH, signIn, signOut } from "@/auth";
 import { getDb } from "@/db";
 import { type FieldErrors, registerUser } from "@/server/accounts";
 
@@ -23,7 +23,7 @@ export async function signUpAction(
   const result = await registerUser(getDb(), credentials);
   if (!result.ok) return { errors: result.errors, email: credentials.email };
   // Lanza la redirección a inicio con la sesión ya iniciada.
-  await signIn("credentials", { ...credentials, redirectTo: "/" });
+  await signIn("credentials", { ...credentials, redirectTo: HOME_PATH });
   return {};
 }
 
@@ -33,7 +33,7 @@ export async function signInAction(
 ): Promise<SignInState> {
   const credentials = credentialsFrom(formData);
   try {
-    await signIn("credentials", { ...credentials, redirectTo: "/" });
+    await signIn("credentials", { ...credentials, redirectTo: HOME_PATH });
     return {};
   } catch (error) {
     // Mismo mensaje para correo inexistente y contraseña errónea.

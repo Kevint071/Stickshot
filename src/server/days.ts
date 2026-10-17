@@ -1,4 +1,4 @@
-import { and, asc, between, desc, eq } from "drizzle-orm";
+import { and, asc, between, desc, eq, sql } from "drizzle-orm";
 import { exerciseLogs, exercises, practiceDays } from "@/db/schema";
 import type { Db } from "@/db/types";
 
@@ -21,7 +21,7 @@ export async function dayDatesBetween(
   return rows.map((row) => row.date);
 }
 
-/** Historial: días del usuario del más reciente al más antiguo. */
+/** Historial: días del usuario del más reciente al más antiguo, con sus totales. */
 export function listDays(db: Db, userId: string) {
   return db
     .select({
@@ -29,9 +29,14 @@ export function listDays(db: Db, userId: string) {
       date: practiceDays.date,
       mood: practiceDays.mood,
       note: practiceDays.note,
+      logs: sql<number>`count(${exerciseLogs.id})::int`,
+      seconds: sql<number>`coalesce(sum(${exerciseLogs.durationSeconds} * ${exerciseLogs.sets}), 0)::int`,
+      topBpm: sql<number | null>`max(${exerciseLogs.bpm})`,
     })
     .from(practiceDays)
+    .leftJoin(exerciseLogs, eq(exerciseLogs.dayId, practiceDays.id))
     .where(eq(practiceDays.userId, userId))
+    .groupBy(practiceDays.id)
     .orderBy(desc(practiceDays.date));
 }
 

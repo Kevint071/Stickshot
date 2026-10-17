@@ -20,18 +20,37 @@
   }
 }
 
+/*
+ * Concepto: un instrumento de precisión. Papel cálido y grafito en vez de
+ * blanco y negro puros, un único naranja señal (el LED del metrónomo) y paneles
+ * oscuros tipo "aparato" que no cambian con el tema.
+ */
 :root {
   color-scheme: light dark;
-  --background: light-dark(#fafafa, #0a0a0a);
-  --foreground: light-dark(#171717, #ededed);
-  --surface: light-dark(#ffffff, #18181b);
-  --muted: light-dark(#71717a, #a1a1aa);
-  --border: light-dark(#e4e4e7, #27272a);
-  --accent: light-dark(#c2410c, #fb923c);
-  --accent-foreground: light-dark(#ffffff, #0a0a0a);
-  --danger: light-dark(#dc2626, #f87171);
+  --background: light-dark(#f2efe9, #0b0a09);
+  --surface: light-dark(#fffdf9, #141311);
+  --surface-2: light-dark(#e9e4da, #1d1b18);
+  --foreground: light-dark(#16130e, #f4efe6);
+  --muted: light-dark(#6b6357, #9f978a);
+  --border: light-dark(#e0d9cc, #272420);
+  --border-strong: light-dark(#cbc2b2, #3a3631);
+  /* Relleno de acento (botones, LED). El texto oscuro encima da 5,9:1. */
+  --accent: light-dark(#ff5b1a, #ff6a2b);
+  --accent-foreground: #160900;
+  /* Acento como texto sobre el fondo: oscurecido en claro para pasar AA. */
+  --accent-ink: light-dark(#c2410c, #ff8a52);
+  --danger: light-dark(#c81e1e, #f87171);
+  --success: light-dark(#15803d, #4ade80);
   --right-hand: light-dark(#2563eb, #3b82f6);
   --left-hand: light-dark(#db2777, #ec4899);
+  /* Panel de aparato: siempre oscuro, como la carcasa de un metrónomo. */
+  --panel: #12100e;
+  --panel-2: #1c1a17;
+  --panel-border: #2e2a25;
+  --panel-foreground: #f4efe6;
+  --panel-muted: #8f877b;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root[data-theme="light"] {
@@ -46,19 +65,188 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
+  --color-success: var(--success);
   --color-right-hand: var(--right-hand);
   --color-left-hand: var(--left-hand);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-border: var(--panel-border);
+  --color-panel-foreground: var(--panel-foreground);
+  --color-panel-muted: var(--panel-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-archivo);
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-spring: var(--ease-spring);
+
+  /* Entradas: rápidas al principio y suaves al final. --i escalona listas. */
+  --animate-rise: rise 0.8s var(--ease-out-expo) calc(var(--i, 0) * 70ms) both;
+  --animate-fade: fade 0.6s ease-out calc(var(--i, 0) * 70ms) both;
+  --animate-pop: pop 0.5s var(--ease-spring) calc(var(--i, 0) * 12ms) both;
+  --animate-marquee: marquee 60s linear infinite;
+  --animate-blink: blink 1.2s steps(2, jump-none) infinite;
+  --animate-ring: ring 1.6s var(--ease-out-expo) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-draw: draw 1.6s var(--ease-out-expo) 0.2s both;
+  --animate-wipe: wipe 1.6s var(--ease-out-expo) 0.15s backwards;
+  --animate-swing: swing 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes ring {
+  from {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes swing {
+  from {
+    transform: rotate(-24deg);
+  }
+  to {
+    transform: rotate(24deg);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@utility font-display {
+  font-family: var(--font-archivo), var(--font-geist-sans), sans-serif;
+  font-stretch: 118%;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Etiqueta de instrumento: mono, mayúsculas, espaciada. */
+@utility label-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Trama de marcas de regla, como la escala de un metrónomo. */
+@utility bg-ticks {
+  background-image: repeating-linear-gradient(
+    90deg,
+    currentColor 0 1px,
+    transparent 1px 12px
+  );
+}
+
+/* Esqueleto de carga con brillo que recorre la pieza. */
+@utility skeleton {
+  border-radius: 0.75rem;
+  background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 7%, transparent) 50%,
+      transparent 100%
+    )
+    var(--surface-2);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }

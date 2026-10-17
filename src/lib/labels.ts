@@ -71,3 +71,8 @@ export function localToday() {
   const day = String(now.getDate()).padStart(2, "0");
   return `${now.getFullYear()}-${month}-${day}`;
 }
+
+/** Primera letra en mayúscula (los formatos de Intl en español van en minúscula). */
+export function capitalize(text: string) {
+  return text.charAt(0).toLocaleUpperCase("es") + text.slice(1);
+}

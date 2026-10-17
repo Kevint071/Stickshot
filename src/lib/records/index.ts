@@ -19,7 +19,7 @@ export type RecordLog = {
   cleanliness: Cleanliness;
 };
 
-const NOTES_PER_BEAT: Record<Subdivision, number> = {
+export const NOTES_PER_BEAT: Record<Subdivision, number> = {
   quarter: 1,
   eighth: 2,
   triplet: 3,
@@ -31,6 +31,11 @@ const NOTES_PER_BEAT: Record<Subdivision, number> = {
 /** Golpes por minuto: BPM por notas por pulso. */
 export function strokesPerMinute(bpm: number, subdivision: Subdivision) {
   return bpm * NOTES_PER_BEAT[subdivision];
+}
+
+/** Tempo equivalente a un récord en golpes por minuto con otra subdivisión. */
+export function bpmFor(strokes: number, subdivision: Subdivision) {
+  return Math.round(strokes / NOTES_PER_BEAT[subdivision]);
 }
 
 /** Tramos para los que cuenta una duración por serie (el suyo y todos los más cortos). */

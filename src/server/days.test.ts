@@ -45,6 +45,13 @@ describe("listDays", () => {
     expect(dates).toEqual(["2026-10-05", "2026-10-03", "2026-10-01"]);
   });
 
+  test("suma registros, tiempo tocado y tempo máximo", async () => {
+    await practice(ana, "2026-10-01", { durationSeconds: 60, sets: 3 });
+    await practice(ana, "2026-10-01", { durationSeconds: 30, bpm: 140 });
+    const [day] = await listDays(t.db, ana);
+    expect(day).toMatchObject({ logs: 2, seconds: 210, topBpm: 140 });
+  });
+
   test("solo los días del usuario", async () => {
     await practice(ana, "2026-10-01");
     await practice(bea, "2026-10-02");
