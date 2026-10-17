@@ -16,6 +16,7 @@ export function Segmented<T extends string | number>({
   value,
   onChange,
   columns,
+  wideColumns,
   error,
 }: {
   label: string;
@@ -23,19 +24,28 @@ export function Segmented<T extends string | number>({
   value: T | undefined;
   onChange: (value: T) => void;
   columns?: number;
+  /**
+   * Columnas cuando el propio selector mide 24rem o más (container query, no
+   * viewport: en escritorio el formulario también va en una columna estrecha).
+   */
+  wideColumns?: number;
   error?: string;
 }) {
   const name = useId();
+  const cols = columns ?? options.length;
   return (
-    <fieldset className="min-w-0 space-y-1.5">
+    <fieldset className="@container min-w-0 space-y-1.5">
       <legend className="label-mono mb-1.5 text-muted">{label}</legend>
       <div
-        className={`grid gap-1 rounded-2xl border bg-surface-2/60 p-1 ${
+        className={`grid grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-1 rounded-2xl border bg-surface-2/60 p-1 @sm:grid-cols-[repeat(var(--cols-wide),minmax(0,1fr))] ${
           error ? "border-danger" : "border-border"
         }`}
-        style={{
-          gridTemplateColumns: `repeat(${columns ?? options.length}, minmax(0, 1fr))`,
-        }}
+        style={
+          {
+            "--cols": cols,
+            "--cols-wide": wideColumns ?? cols,
+          } as React.CSSProperties
+        }
       >
         {options.map((option) => {
           const checked = option.value === value;

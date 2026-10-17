@@ -357,7 +357,8 @@ export function LogForm({
         options={subdivisionOptions}
         value={subdivision}
         onChange={setSubdivision}
-        columns={3}
+        columns={2}
+        wideColumns={3}
         error={error("subdivision")}
       />
 
